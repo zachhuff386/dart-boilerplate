@@ -9,6 +9,7 @@ import 'package:angular/angular.dart' show Component;
 )
 class TestComp {
   String inputValue;
+  String commitedInputValue;
   bool showToast;
 
   void onClick() {
