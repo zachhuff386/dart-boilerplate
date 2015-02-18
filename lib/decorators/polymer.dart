@@ -1,10 +1,10 @@
 library polymer_dec;
 
-import 'dart:html';
 import 'package:angular/angular.dart' show Decorator;
 import 'package:angular/angular.dart' as ng;
 import 'package:observe/observe.dart' as obsrv;
 import 'package:template_binding/template_binding.dart' as tmpl_bnd;
+import 'dart:html' as dom;
 
 typedef dynamic _Nullary();
 typedef dynamic _Unary(a);
@@ -66,8 +66,8 @@ typedef dynamic _Unary(a);
   ]
 )
 class PolymerDec {
-  PolymerDec(Node node, ng.Parser parser, ng.Scope scope) {
-    Element element = node;
+  PolymerDec(dom.Node node, ng.Parser parser, ng.Scope scope) {
+    dom.Element element = node;
 
     element.attributes.forEach((key, value) {
       if (!key.startsWith('py-')) {
@@ -90,9 +90,19 @@ class PolymerDec {
 }
 
 class ValueBindable implements obsrv.Bindable {
-  var _value;
   Function callback;
   Function onChange;
+
+  var _value;
+  void set value(dynamic value) {
+    this._value = value;
+    if (this.onChange != null) {
+      this.onChange(this._value);
+    }
+  }
+  dynamic get value {
+    return this._value;
+  }
 
   void close() {
     this.callback = null;
@@ -113,16 +123,6 @@ class ValueBindable implements obsrv.Bindable {
         this.callback(this._value);
       }
     }
-  }
-
-  void set value(dynamic value) {
-    this._value = value;
-    if (this.onChange != null) {
-      this.onChange(this._value);
-    }
-  }
-  dynamic get value {
-    return this._value;
   }
 
   void deliver() {}
