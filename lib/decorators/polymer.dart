@@ -10,7 +10,11 @@ typedef dynamic _Nullary();
 typedef dynamic _Unary(a);
 
 @Decorator(
-  selector: '[py-*]'
+  selector: '[py-*]',
+  exportExpressionAttrs: const [
+    'py-value',
+    'py-opened',
+  ]
 )
 class PolymerDec {
   PolymerDec(Node node, ng.Parser parser, ng.Scope scope) {
