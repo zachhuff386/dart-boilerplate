@@ -10,6 +10,7 @@ import 'dart:html' as dom;
   cssUrl: 'packages/boilerplate/components/test/test.css'
 )
 class TestComp implements ng.ShadowRootAware {
+  int menuSelected;
   String inputValue;
   String commitedInputValue;
   int sliderValue;
@@ -23,6 +24,11 @@ class TestComp implements ng.ShadowRootAware {
     var sliderElem = root.querySelector('paper-slider');
     sliderElem.addEventListener('core-change', (evt) {
       print('sliderEvent: ${evt}');
+    });
+
+    var menuElem = root.querySelector('paper-dropdown-menu');
+    menuElem.addEventListener('core-select', (evt) {
+      print('menuEvent: ${evt}');
     });
   }
 }
