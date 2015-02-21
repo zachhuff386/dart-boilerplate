@@ -7,8 +7,6 @@ MainRout(ng.Router router, ng.RouteViewFactory views) {
     'root': ng.ngRoute(
       path: '/root',
       view: 'packages/boilerplate/views/root.html',
-      enter: (_) {
-      },
       defaultRoute: true
     )
   });
