@@ -5,7 +5,7 @@ import 'package:angular/angular.dart' as ng;
 import 'dart:html' as dom;
 
 @Component(
-  selector: 'test',
+  selector: 'x-test',
   templateUrl: 'packages/boilerplate/components/test/test.html',
   cssUrl: 'packages/boilerplate/components/test/test.css'
 )
