@@ -2,20 +2,25 @@ library collection;
 
 import 'package:boilerplate/exceptions.dart';
 import 'package:boilerplate/remote.dart' as remote;
-import 'package:boilerplate/model.dart' as mdl;
+import 'package:boilerplate/model.dart' as model;
 
-import 'package:angular/angular.dart' as ng;
-import 'dart:mirrors' as mirrors;
 import 'dart:collection' as collection;
 
 abstract class Collection extends remote.Remote with collection.IterableMixin {
-  List<mdl.Model> _collection;
+  List<model.Model> _collection;
   Function onAdd;
   Function onChange;
   Function onRemove;
-  Type model;
 
-  Collection(ng.Http http) : super(http), _collection = [];
+  Collection() : super(), _collection = [];
+
+  model.Model newModel() {
+    throw new UnimplementedError('Model new not implemented.');
+  }
+
+  Collection newCollection() {
+    throw new UnimplementedError('Collection new not implemented.');
+  }
 
   Iterator get iterator {
     return this._collection.iterator;
@@ -26,13 +31,9 @@ abstract class Collection extends remote.Remote with collection.IterableMixin {
   }
 
   void add(Map<String, dynamic> attrs) {
-    var modelCls = mirrors.reflectClass(this.model);
-    var initSym = const Symbol('');
-    var model = modelCls.newInstance(initSym, [this.http]).reflectee;
-
-    model.import(attrs);
-
-    this._collection.add(model);
+    var mdl = this.newModel();
+    mdl.import(attrs);
+    this._collection.add(mdl);
   }
 
   void validate(String name) {
@@ -42,12 +43,10 @@ abstract class Collection extends remote.Remote with collection.IterableMixin {
   }
 
   Collection clone() {
-    var mirror = mirrors.reflect(this);
-    var clone = mirror.type.newInstance(
-      const Symbol(''), [this.http]).reflectee;
+    var clone = this.newCollection();
 
-    for (var model in this) {
-      clone._collection.add(model.clone());
+    for (var mdl in this) {
+      clone._collection.add(mdl.clone());
     }
 
     return clone;
@@ -55,11 +54,11 @@ abstract class Collection extends remote.Remote with collection.IterableMixin {
 
   void imported() {}
 
-  void added(mdl.Model model) {}
+  void added(model.Model mdl) {}
 
-  void changed(mdl.Model model) {}
+  void changed(model.Model mdl) {}
 
-  void removed(mdl.Model model) {}
+  void removed(model.Model mdl) {}
 
   void import(dynamic responseData) {
     var data;
@@ -69,9 +68,6 @@ abstract class Collection extends remote.Remote with collection.IterableMixin {
     } on IgnoreResponse {
       return;
     }
-
-    var modelCls = mirrors.reflectClass(this.model);
-    var initSym = const Symbol('');
 
     var curIds = [];
     var newIds = new Set();
@@ -111,7 +107,7 @@ abstract class Collection extends remote.Remote with collection.IterableMixin {
           model = recModels.removeFirst();
         }
         else {
-          model = modelCls.newInstance(initSym, [this.http]).reflectee;
+          model = this.newModel();
         }
         model.init();
       }

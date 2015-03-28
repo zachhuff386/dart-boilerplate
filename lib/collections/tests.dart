@@ -1,16 +1,15 @@
 library tests_col;
 
-import 'package:boilerplate/exceptions.dart';
+import 'package:boilerplate/models/models.dart' as models;
+import 'package:boilerplate/collection.dart' as collection;
+import 'package:boilerplate/model.dart' as model;
 
-import 'package:boilerplate/collection.dart' as collec;
-import 'package:boilerplate/models/test.dart' as tst;
+class Tests extends collection.Collection {
+  model.Model newModel() {
+    return new models.Test();
+  }
 
-import 'package:angular/angular.dart' show Injectable;
-import 'package:angular/angular.dart' as ng;
-
-@Injectable()
-class Tests extends collec.Collection {
-  Type model = tst.Test;
-
-  Tests(ng.Http http) : super(http);
+  collection.Collection newCollection() {
+    return new Tests();
+  }
 }

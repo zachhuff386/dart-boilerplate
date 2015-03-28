@@ -3,21 +3,7 @@ library model;
 import 'package:boilerplate/remote.dart' as remote;
 
 import 'package:angular/angular.dart' as ng;
-import 'dart:mirrors' as mirrors;
 import 'dart:async' as async;
-
-Map<Type, Map<String, Symbol>> _attrSymbols = {};
-Map<Type, Map<String, Function>> _attrValidators = {};
-
-class Attribute {
-  final String name;
-  const Attribute(this.name);
-}
-
-class Validator {
-  final String name;
-  const Validator(this.name);
-}
 
 class Invalid extends Error {
   String type;
@@ -28,79 +14,63 @@ class Invalid extends Error {
   toString() => this.message;
 }
 
-_buildAttrs(model) {
-  if (!_attrSymbols.containsKey(model.runtimeType)) {
-    var symbols = {};
-    var validators = {};
-    var mirror = mirrors.reflect(model).type;
-
-    mirror.declarations.forEach((value, varMirror) {
-      varMirror.metadata.forEach((metadata) {
-        if (metadata.reflectee is Attribute) {
-          symbols[metadata.reflectee.name] = value;
-        }
-        else if (metadata.reflectee is Validator) {
-          validators[metadata.reflectee.name] = value;
-        }
-      });
-    });
-
-    _attrSymbols[model.runtimeType] = symbols;
-    _attrValidators[model.runtimeType] = validators;
-  }
-}
-
 abstract class Model extends remote.Remote {
   dynamic id;
   Function onLinkClear;
 
-  Model(ng.Http http) : super(http) {
+  Model() : super() {
     this.init();
   }
 
-  Map<String, Symbol> get _symbols {
-    _buildAttrs(this);
-    return _attrSymbols[this.runtimeType];
+  Model newModel() {
+    throw new UnimplementedError('Model new not implemented.');
   }
 
-  Map<String, Function> get _validators {
-    _buildAttrs(this);
-    return _attrValidators[this.runtimeType];
+  Map<String, Function> get getters {
+    throw new UnimplementedError('Getter map not implemented.');
+  }
+
+  Map<String, Function> get setters {
+    throw new UnimplementedError('Setter map not implemented.');
+  }
+
+  Map<String, Function> get validators {
+    return {};
   }
 
   void validate(String name) {
-    var symbols = this._symbols;
-    var validators = this._validators;
-    var mirror = mirrors.reflect(this);
-    var validator = mirror.getField(validators[name]);
-    validator.apply([mirror.getField(symbols[name]).reflectee]);
+    var validator = this.validators[name];
+
+    if (validator != null) {
+      validator(this.getters[name]());
+    }
   }
 
   Model clone() {
-    var symbols = this._symbols;
-    var mirror = mirrors.reflect(this);
-    var clone = mirror.type.newInstance(const Symbol(''), [this.http]);
+    var mdl = this.newModel();
+    var getters = this.getters;
+    var setters = mdl.setters;
 
-    symbols.forEach((name, symbol) {
-      clone.setField(symbol, mirror.getField(symbol).reflectee);
+    setters.forEach((name, setter) {
+      setter(getters[name]());
     });
 
-    return clone.reflectee;
+    return mdl;
   }
 
   void import(dynamic responseData) {
-    var symbols = this._symbols;
     var data = this.parse(responseData);
-    var mirror = mirrors.reflect(this);
+    var setters = this.setters;
 
-    data.forEach((key, value) {
-      var symbol = symbols[key];
-      if (symbol == null) {
-        return;
-      }
+    if (data != null && data != '') {
+      data.forEach((key, value) {
+        var setter = setters[key];
 
-      mirror.setField(symbol, value);
-    });
+        if (setter != null) {
+          setter(value);
+        }
+      });
+    }
 
     this.imported();
     if (this.onImport != null) {
@@ -110,42 +80,26 @@ abstract class Model extends remote.Remote {
 
   Map<String, dynamic> export([List<String> fields]) {
     var data = {};
-    var symbols = this._symbols;
-    var mirror = mirrors.reflect(this);
+    var getters = this.getters;
 
-    if (fields != null) {
-      fields.forEach((name) {
-        var symbol = symbols[name];
-        data[name] = mirror.getField(symbol).reflectee;
-      });
-    }
-    else {
-      symbols.forEach((name, symbol) {
-        data[name] = mirror.getField(symbol).reflectee;
-      });
-    }
+    getters.forEach((name, getter) {
+      data[name] = getter();
+    });
 
     return data;
   }
 
   async.Future destroy() {
-    var loadId = this.setLoading();
-
     return this.http.delete(this.url).then((response) {
-      this.clearLoading(loadId);
       this.clearError();
       this.import(response.data);
       return response.data;
     }).catchError((err) {
-      this.clearLoading(loadId);
       return new async.Future.error(this.parseError(err));
     }, test: (e) => e is ng.HttpResponse);
   }
 
   async.Future send(String method, String url, List<String> fields) {
-    var symbols = this._symbols;
-    var mirror = mirrors.reflect(this);
-    var loadId = this.setLoading();
     var methodFunc;
 
     var data = this.export(fields);
@@ -161,12 +115,10 @@ abstract class Model extends remote.Remote {
     }
 
     return methodFunc(url, data).then((response) {
-      this.clearLoading(loadId);
       this.clearError();
       this.import(response.data);
       return response.data;
     }).catchError((err) {
-      this.clearLoading(loadId);
       return new async.Future.error(this.parseError(err));
     }, test: (e) => e is ng.HttpResponse);
   }
@@ -180,11 +132,10 @@ abstract class Model extends remote.Remote {
   }
 
   void clear() {
-    var symbols = this._symbols;
-    var mirror = mirrors.reflect(this);
+    var setters = this.setters;
 
-    symbols.values.forEach((symbol) {
-      mirror.setField(symbol, null);
+    setters.forEach((_, setter) {
+      setter(null);
     });
   }
 

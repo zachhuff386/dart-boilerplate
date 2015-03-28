@@ -1,24 +1,38 @@
 library test_mod;
 
-import 'package:boilerplate/model.dart' as mdl;
+import 'package:boilerplate/model.dart' as model;
 
-import 'package:angular/angular.dart' show Injectable;
-import 'package:angular/angular.dart' as ng;
-
-@Injectable()
-class Test extends mdl.Model {
-  @mdl.Attribute('id')
+class Test extends model.Model {
   String id;
 
-  @mdl.Attribute('name')
   String name;
-
-  @mdl.Validator('name')
   void nameValidator(val) {
     if (val == null || val == '') {
-      throw new mdl.Invalid('empty', 'Name cannot be empty');
+      throw new model.Invalid('empty', 'Name cannot be empty');
     }
   }
 
-  Test(ng.Http http) : super(http);
+  model.Model newModel() {
+    return new Test();
+  }
+
+  Map<String, Function> get getters {
+    return {
+      'id': () => this.id,
+      'name': () => this.name,
+    };
+  }
+
+  Map<String, Function> get setters {
+    return {
+      'id': (x) => this.id = x,
+      'name': (x) => this.name = x,
+    };
+  }
+
+  Map<String, Function> get validators {
+    return {
+      'name': this.nameValidator,
+    };
+  }
 }
