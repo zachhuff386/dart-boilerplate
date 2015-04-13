@@ -58,6 +58,31 @@ abstract class Collection extends remote.Remote with collection.IterableMixin {
 
   void removed(model.Model mdl) {}
 
+  void update(dynamic data) {
+    for (var model in this._collection) {
+      if (model.id == data['id']) {
+        model.import(data);
+        break;
+      }
+    }
+  }
+
+  void append(dynamic data) {
+    var model = this.newModel();
+    model.onDestroy = this._onDestroy;
+    model.init();
+    model.import(data);
+    this._collection.add(model);
+  }
+
+  void prepend(dynamic data) {
+    var model = this.newModel();
+    model.onDestroy = this._onDestroy;
+    model.init();
+    model.import(data);
+    this._collection.insert(0, model);
+  }
+
   void import(dynamic responseData) {
     var data;
 
